@@ -97,7 +97,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3348c03922b9f664b840931d97b5a98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nearGround: []
   boardMapGenerator: {fileID: 3040916193109022829, guid: 199df1b34e64e83438cfe55c3dd90861, type: 3}
   posX: 0
   posY: 0

@@ -87,11 +87,17 @@ public class Ground : MonoBehaviour
     {
         if (owner == Owner.Player) 
         {
-            spriteRenderer.color = Color.blue;// 플레이어
+            // 플레이어
+            Color color = Color.blue;
+            color.a = 0.5f; // 투명하게 해서 플레이어 보이도록
+            spriteRenderer.color = color;
         }
         else
         {
-            spriteRenderer.color = Color.red; // 적
+            //적
+            Color color = Color.red;
+            color.a = 0.5f; 
+            spriteRenderer.color = color;
         }
     }
     

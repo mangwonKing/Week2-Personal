@@ -39,10 +39,19 @@ public class Character : MonoBehaviour
     public int isSafe = 0; // 0 은 선택 안한 값
     public List<bool> coinFlipResult; //ui매니저 혹은 ui 가 이걸 가져가서 이미지를 띄우는데 쓴다.
 
+    public Vector3 offset;
 
     private void Start()
     {
         tile = GameObject.Find("MapGenerator").GetComponent<BoardMapGenerator>();
+        if(type == Type.Player )
+        {
+            offset = new Vector3(-0.25f,0,0);
+        }
+        else
+        {
+            offset = new Vector3(0.25f,0,0);
+        }
         // Debug.Log("POSYX : " + posX + posY);
     }
     public void SetInitCharacterPos()
@@ -99,21 +108,42 @@ public class Character : MonoBehaviour
     // 3. 동전 결과 나오면 그만큼 이동하기
     public void Move(int moveCount)
     {
+        //while(moveCount > 0)
+        //{
+        //    int ny = posY + dirY[dirIndex];
+        //    int nx = posX + dirX[dirIndex];
+        //    while(!tile.CheckRange(nx, ny)) // 해당 방향으로 전진 가능한지 검사
+        //    {
+        //        DirChange();
+        //        nx = posX + dirX[dirIndex];
+        //        ny = posY + dirY[dirIndex];
+        //    }
+        //    //Debug.Log(nx + "," + ny + " 위치로 이동!");
+        //    transform.position = tile.tileMap[nx, ny].transform.position  + offset; // 이동
+        //    posX = nx; posY = ny;
+        //    moveCount--;// 이동횟수 감소
+
+        //}
+        Debug.Log("이동중입니다.");
+        StartCoroutine(OneTimeOneMove(moveCount));
+    }
+    IEnumerator OneTimeOneMove(int moveCount)
+    {
         while(moveCount > 0)
         {
             int ny = posY + dirY[dirIndex];
             int nx = posX + dirX[dirIndex];
-            while(!tile.CheckRange(nx, ny)) // 해당 방향으로 전진 가능한지 검사
+            while (!tile.CheckRange(nx, ny)) // 해당 방향으로 전진 가능한지 검사
             {
                 DirChange();
                 nx = posX + dirX[dirIndex];
                 ny = posY + dirY[dirIndex];
             }
             //Debug.Log(nx + "," + ny + " 위치로 이동!");
-            transform.position = tile.tileMap[nx, ny].transform.position; // 이동
+            transform.position = tile.tileMap[nx, ny].transform.position + offset; // 이동
             posX = nx; posY = ny;
             moveCount--;// 이동횟수 감소
-
+            yield return new WaitForSeconds(1f);
         }
     }
     void DirChange()
