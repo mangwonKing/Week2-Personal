@@ -6,6 +6,7 @@ using UnityEngine;
 //캐릭터의 행동과 스탯 관리
 public class Character : MonoBehaviour
 {
+    public UIManager uiManager;
     enum Type
     {
         Player,

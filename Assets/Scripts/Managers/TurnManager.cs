@@ -128,7 +128,6 @@ public class TurnManager : MonoBehaviour
         if (coinCount > 0)
         {
             Debug.Log("이동 동전 선택!");
-
             characters[characterIdx].coinCounts -= coinCount; // 사용 코인만큼 차감 , 1회만
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts,characterIdx); // idx 로 캐릭터 구분
             state = GameState.MoveCoinFlip;
@@ -142,7 +141,6 @@ public class TurnManager : MonoBehaviour
         {
             Debug.Log("이동 동전 굴림!");
             uiManager.ShowMoveCoinTossUI(characters[characterIdx].coinFlipResult);
-            //moveCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
             characters[characterIdx].coinFlipResult.Clear();// 다음을 위해 비우기
             state = GameState.Move;
         }
@@ -473,7 +471,7 @@ public class TurnManager : MonoBehaviour
         moveCount = 0;
         ownerGround = 0;
         ownerName = null;
-
+        uiManager.SetSelectedCoinCount();// 버튼 초기화
         investPersent = 50; // 투자확률 초기화
         selectMode = 0; // 투자 모드 초기화
         state = GameState.StartTurn;

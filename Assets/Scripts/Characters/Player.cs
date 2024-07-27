@@ -8,20 +8,20 @@ public class Player : Character
     {
         //Debug.Log("동전을 선택하세요");
         useMoveCoin = 0;
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            useMoveCoin = 1;
-            //Debug.Log("1번 눌림");
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            useMoveCoin = 2;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            useMoveCoin = 3;
-        }
-
+        //if (Input.GetKeyDown(KeyCode.Alpha1))
+        //{
+        //    useMoveCoin = 1;
+        //    //Debug.Log("1번 눌림");
+        //}
+        //else if (Input.GetKeyDown(KeyCode.Alpha2))
+        //{
+        //    useMoveCoin = 2;
+        //}
+        //else if (Input.GetKeyDown(KeyCode.Alpha3))
+        //{
+        //    useMoveCoin = 3;
+        //}
+        useMoveCoin = uiManager.GetSelectedCoinCount(); // 버튼 입력
         return useMoveCoin;
     }
     public override int SelectAction()
