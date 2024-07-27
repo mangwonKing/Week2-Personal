@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public UIManager uiManager;
     public TurnManager turnManager;
     public BoardMapGenerator boardMapGenerator;
     public GroundManager groundManager;
@@ -14,8 +15,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         boardMapGenerator.GenerateMap();// 맵 생성하기
-        characters[0].coinCounts = 30;
-        characters[1].coinCounts = 30; // 코인 개수 초기화
 
 
     }
@@ -31,6 +30,7 @@ public class GameManager : MonoBehaviour
          if(isSpawn)
         {
             isSpawn = false;
+            
             StartCoroutine(turnManager.GameLoop());
         }
     }

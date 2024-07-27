@@ -10,18 +10,19 @@ public class TurnManager : MonoBehaviour
         SelectMoveCoin,
         MoveCoinFlip,
         Move,
+        WaitMove,
         CheckOwner,
         SelectAction,
         SafeAction,
         InvestAction,
         ConfirmEndTurn,
         EndTurn,
+        EndGame
     }
-
+    
     public Character[] characters;
-    public CoinTossUI moveCoinTossUI;
-    public CoinTossUI actionCoinTossUI;
     public GroundManager groundManager;
+    public UIManager uiManager;
 
     private int characterIdx = 0;
     private int coinCount = 0;
@@ -41,6 +42,9 @@ public class TurnManager : MonoBehaviour
     string ownerName = null;
     public IEnumerator GameLoop()
     {
+        //시작시 코인 알려주기
+        uiManager.ShowCoinCount(characters[0].coinCounts, 0);
+        uiManager.ShowCoinCount(characters[1].coinCounts, 1);
         while (true)
         {
             switch (state)
@@ -56,6 +60,9 @@ public class TurnManager : MonoBehaviour
                     break;
                 case GameState.Move:
                     Move();
+                    break;
+                case GameState.WaitMove:
+                    WaitMove();
                     break;
                 case GameState.CheckOwner:
                     CheckOwner();
@@ -75,6 +82,9 @@ public class TurnManager : MonoBehaviour
                 case GameState.EndTurn:
                     EndTurn();
                     break;
+                case GameState.EndGame:
+                    EndGame();
+                    break;
             }
             yield return null;
         }
@@ -82,18 +92,24 @@ public class TurnManager : MonoBehaviour
 
     void StartTurn()
     {
-        moveCoinTossUI.InitCoinView();
-        actionCoinTossUI.InitCoinView();
-        // 턴 시작 로직
-        //if (!isSelectMoveCoin)
-        //{
-        //    //Debug.Log("턴시작!");
-        //    //state = GameState.SelectMoveCoin;
-        //}
-        Debug.Log("턴시작!");
-        state = GameState.SelectMoveCoin;
+        if (characters[0].coinCounts <= 0 && characters[1].coinCounts <= 0)
+        {
+            Debug.Log("게임종료");
+            state = GameState.EndGame;
+        }
+        else
+        {
+            uiManager.InitCoinView();
+            // 턴 시작 로직
+            //if (!isSelectMoveCoin)
+            //{
+            //    //Debug.Log("턴시작!");
+            //    //state = GameState.SelectMoveCoin;
+            //}
+            Debug.Log("턴시작!");
+            state = GameState.SelectMoveCoin;
+        }
     }
-
     void SelectMoveCoin()
     {
         coinCount = characters[characterIdx].GetSelectedCoinCount();
@@ -103,6 +119,7 @@ public class TurnManager : MonoBehaviour
             Debug.Log("이동 동전 선택!");
 
             characters[characterIdx].coinCounts -= coinCount; // 사용 코인만큼 차감 , 1회만
+            uiManager.ShowCoinCount(characters[characterIdx].coinCounts,characterIdx); // idx 로 캐릭터 구분
             state = GameState.MoveCoinFlip;
         }
     }
@@ -113,7 +130,8 @@ public class TurnManager : MonoBehaviour
         if (moveCount > 0)
         {
             Debug.Log("이동 동전 굴림!");
-            moveCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
+            uiManager.ShowMoveCoinTossUI(characters[characterIdx].coinFlipResult);
+            //moveCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
             characters[characterIdx].coinFlipResult.Clear();// 다음을 위해 비우기
             state = GameState.Move;
         }
@@ -123,8 +141,15 @@ public class TurnManager : MonoBehaviour
     {
         characters[characterIdx].Move(moveCount);
         Debug.Log("이동!");
-
-        state = GameState.CheckOwner;
+        //이동 대기 상태 만들것
+        state = GameState.WaitMove;
+    }
+    void WaitMove()
+    {
+        if (characters[characterIdx].isMoveEnd) //이동을 기다리도록 
+        {
+            state = GameState.CheckOwner;
+        }
     }
     void CheckOwner()
     {
@@ -134,6 +159,7 @@ public class TurnManager : MonoBehaviour
         {
             Debug.Log("내땅을 밟았네요 코인 보너스!");
             characters[characterIdx].coinCounts += 2; // 내땅은 바로 코인 주고 끝내기
+            uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
             state = GameState.ConfirmEndTurn;
         }
         else ownerGround = 2;
@@ -168,6 +194,7 @@ public class TurnManager : MonoBehaviour
         if (ownerGround == 0) //빈땅
         {
             characters[characterIdx].coinCounts--; //코인 1개 소모
+
             groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 캐릭터의 이름을 넘겨주고 점령
             state = GameState.ConfirmEndTurn;
         }
@@ -182,6 +209,7 @@ public class TurnManager : MonoBehaviour
             Debug.Log(" 내땅 밟음");
             return;
         }
+        uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
     }
     void InvestAction() // 투자 액션 
     {
@@ -200,13 +228,15 @@ public class TurnManager : MonoBehaviour
             }// 일단 각 50퍼 
             
         }
-        actionCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
+        uiManager.ShowActionCoinTossUI(characters[characterIdx].coinFlipResult);
+        //actionCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
         characters[characterIdx].coinFlipResult.Clear();
         if (isSuccess) // 성공
         {
             groundManager.OccupyThreeGround(characters[characterIdx].GetCharacterType());
         }
         state = GameState.ConfirmEndTurn;
+        uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
     }
     IEnumerator ConfirmEndTurn()
     {
@@ -231,17 +261,27 @@ public class TurnManager : MonoBehaviour
     {
         Debug.Log("턴 종료 남은코인 : " + characters[characterIdx].coinCounts);
         // 턴 종료 로직
-
+        
         characterIdx = (characterIdx + 1) % characters.Length; // 플레이어 교체
-
-        //다음 플레이어를 위해 턴에서 사용했던것들 초기화
+        if (characters[characterIdx].coinCounts <= 0)
+        {
+            //다음 캐릭터가 코인이 없으니 턴은 오지 않음
+            characterIdx = (characterIdx + 1) % characters.Length;
+        }
+         //다음 플레이어를 위해 턴에서 사용했던것들 초기화
         playerAction = 0;
         coinCount = 0;
         moveCount = 0;
         ownerGround = 0;
         ownerName = null;
+
         state = GameState.StartTurn;
         
+        
+    }
+    void EndGame()
+    {
+        Debug.Log("게임종료");
     }
     
 }

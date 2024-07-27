@@ -35,6 +35,7 @@ public class Character : MonoBehaviour
     BoardMapGenerator tile;
 
     public bool isInvest = false;
+    public bool isMoveEnd = false; //이동이 끝났는지
 
     public int isSafe = 0; // 0 은 선택 안한 값
     public List<bool> coinFlipResult; //ui매니저 혹은 ui 가 이걸 가져가서 이미지를 띄우는데 쓴다.
@@ -56,7 +57,7 @@ public class Character : MonoBehaviour
     }
     public void SetInitCharacterPos()
     {
-        transform.position = tile.tileMap[0, 0].transform.position;
+        transform.position = tile.tileMap[0, 0].transform.position + offset;
     }
     // 캐릭터가 수행할 기능
     // 1. 턴시작시 동전 개수 정하기
@@ -83,8 +84,9 @@ public class Character : MonoBehaviour
             //Debug.Log(move + "횟수 이동 가능!");
 
         }
-        if(move ==6)//보너스턴 제공
+        if(move ==6)//보너스 코인  3개 제공
         {
+            coinCount += 3;
             Debug.Log("전부 성공 보너스!");
         }
         return move;
@@ -129,7 +131,8 @@ public class Character : MonoBehaviour
     }
     IEnumerator OneTimeOneMove(int moveCount)
     {
-        while(moveCount > 0)
+        isMoveEnd = false;
+        while (moveCount > 0)
         {
             int ny = posY + dirY[dirIndex];
             int nx = posX + dirX[dirIndex];
@@ -142,9 +145,12 @@ public class Character : MonoBehaviour
             //Debug.Log(nx + "," + ny + " 위치로 이동!");
             transform.position = tile.tileMap[nx, ny].transform.position + offset; // 이동
             posX = nx; posY = ny;
+            Debug.Log(posX + "," + posY + "로 이동");
             moveCount--;// 이동횟수 감소
             yield return new WaitForSeconds(1f);
         }
+        isMoveEnd = true;
+
     }
     void DirChange()
     {
