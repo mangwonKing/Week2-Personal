@@ -63,7 +63,7 @@ public class Ground : MonoBehaviour
     }
     public string GetOwner()
     {
-        FindNearGround();
+        FindNearGround();// ÀÎÁ¢ ¶¥ÀÇ ÀÎµ¦½º °¡Á®¿È
         //Debug.Log(System.Enum.GetName(typeof(Owner), owner));
         //Debug.Log("±ÙÁ¢ ÇÑÄ­" +nearGround[0].Item1 +","+ nearGround[0].Item2);
         //Debug.Log("±ÙÁ¢ ÇÑÄ­" +nearGround[1].Item1 +","+ nearGround[1].Item2);

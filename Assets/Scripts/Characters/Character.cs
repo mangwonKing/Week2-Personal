@@ -20,7 +20,7 @@ public class Character : MonoBehaviour
     public int useActionCoin;
 
     public int coinCounts = 30;
-    public List<GameObject> ownedTiles; //소유한 땅
+    public List<Ground> ownedTiles; //소유한 땅
     public int turn;
 
     //이동 방향
@@ -110,22 +110,6 @@ public class Character : MonoBehaviour
     // 3. 동전 결과 나오면 그만큼 이동하기
     public void Move(int moveCount)
     {
-        //while(moveCount > 0)
-        //{
-        //    int ny = posY + dirY[dirIndex];
-        //    int nx = posX + dirX[dirIndex];
-        //    while(!tile.CheckRange(nx, ny)) // 해당 방향으로 전진 가능한지 검사
-        //    {
-        //        DirChange();
-        //        nx = posX + dirX[dirIndex];
-        //        ny = posY + dirY[dirIndex];
-        //    }
-        //    //Debug.Log(nx + "," + ny + " 위치로 이동!");
-        //    transform.position = tile.tileMap[nx, ny].transform.position  + offset; // 이동
-        //    posX = nx; posY = ny;
-        //    moveCount--;// 이동횟수 감소
-
-        //}
         Debug.Log("이동중입니다.");
         StartCoroutine(OneTimeOneMove(moveCount));
     }
@@ -151,6 +135,10 @@ public class Character : MonoBehaviour
         }
         isMoveEnd = true;
 
+    }
+    public virtual int SelectInvestMode()
+    {
+        return 0;
     }
     void DirChange()
     {

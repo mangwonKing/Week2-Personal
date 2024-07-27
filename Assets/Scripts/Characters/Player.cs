@@ -39,5 +39,17 @@ public class Player : Character
         return 0; //입력 여부
         
     }
+    public override int SelectInvestMode()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            return 1;// 2칸 점령
+        }
+        else if (Input.GetKeyDown(KeyCode.E))
+        {
+            return 2;
+        }
+        else return 0;
+    }
 
 }

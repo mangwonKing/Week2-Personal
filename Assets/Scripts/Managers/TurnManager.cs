@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -15,6 +16,7 @@ public class TurnManager : MonoBehaviour
         SelectAction,
         SafeAction,
         InvestAction,
+        InvestCustom,
         ConfirmEndTurn,
         EndTurn,
         EndGame
@@ -29,7 +31,12 @@ public class TurnManager : MonoBehaviour
     private int moveCount = 0;
     private int ownerGround = 0; // 0 은 빈땅 , 1은 내땅 2는 상대
     int playerAction = 0; //1 이 안전 2 가 투자
-    
+
+
+    int investPersent = 50; // 기본 50 
+    int selectMode = 0;
+
+    int otherIdx;
     //게임 상태관리
     private GameState state;
 
@@ -76,6 +83,9 @@ public class TurnManager : MonoBehaviour
                 case GameState.InvestAction:
                     InvestAction();
                     break;
+                case GameState.InvestCustom:
+                    InvestCustom();
+                    break;
                 case GameState.ConfirmEndTurn:
                     yield return StartCoroutine(ConfirmEndTurn());
                     break;
@@ -99,6 +109,7 @@ public class TurnManager : MonoBehaviour
         }
         else
         {
+            otherIdx = characterIdx + 1 == 2 ? 0 : 1; // 상대방 인덱스 저장
             uiManager.InitCoinView();
             // 턴 시작 로직
             //if (!isSelectMoveCoin)
@@ -154,19 +165,46 @@ public class TurnManager : MonoBehaviour
     void CheckOwner()
     {
         ownerName = groundManager.OwnerName(characters[characterIdx].GetPosx(), characters[characterIdx].GetPosy()); //땅 존재 받고
-        if (ownerName == "None") ownerGround = 0;
+        List<string> list = groundManager.GetNearOwner(); // 인접 땅의 오너
+        if (ownerName == "None")
+        {
+            ownerGround = 0;
+            //빈땅에서 투자할 경우의 확률 고지 
+            CalculatePersent(list);
+        }
         else if (ownerName == characters[characterIdx].GetCharacterType())
         {
             Debug.Log("내땅을 밟았네요 코인 보너스!");
-            characters[characterIdx].coinCounts += 2; // 내땅은 바로 코인 주고 끝내기
+            characters[characterIdx].coinCounts += 2; // 내땅은 코인 주고 행동 선택
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
-            state = GameState.ConfirmEndTurn;
+            ownerGround = 1;
+            CalculatePersent(list);
         }
-        else ownerGround = 2;
+        else
+        {
+            ownerGround = 2;
+        }
         Debug.Log(ownerName + "땅 입니다.");
+
+        
         state = GameState.SelectAction;
+        
     }
-    //지금 액션 선택이랑 실행이 같이 있음 -> 액션을 선택하면 실행쪽 턴으로 넘기게 해보자.
+    void CalculatePersent(List<string> list)
+    {
+        
+        foreach (var item in list)
+        {
+            Debug.Log("인접한 땅의 주인 : " + item);
+            if (item != characters[characterIdx].GetCharacterType() && item != "None") // 빈땅도 아니고 이름이 다르다면 적으로 간주 
+            {
+                Debug.Log("적은 확률은 감소시킵니다.");
+                investPersent -= 10;
+            }
+        }
+        Debug.Log("이번 땅에서 투자할 경우 확률은 " + investPersent + "%입니다.");
+    }
+
     void SelectAction()
     {
         playerAction = characters[characterIdx].SelectAction(); // 플레이어가 투자를 할지 안전을 할지 선택
@@ -186,7 +224,16 @@ public class TurnManager : MonoBehaviour
             }
         }
     }
-    //구조 개선: 샐랙트 액션에서 땅 존재를 파악하고 변수로 갖고 있고 액션을 선택하는게 올바른 방향 
+    //구조 개선: 투자를 하기 전에 확률이 어느정도 되는지 알아야 할 것 같은데..?
+    // 액션을 선택하기 전에 해당 땅의 투자정보를 미리 가져와서 알려주는 상태를 만들고 
+    // 그걸 보고 안전 or 투자를 선택할 수 있도록 하자.
+    // 투자 액션에서는 바로 해당 확률을 적용한다.
+
+    //집중력을 넣는다면 투자액션 들어가서 집중력을 사용하시겠습니까? 묻는 상태 만들고
+    // 집중력 1개당 동전확정 1개 들어가는걸로 보정
+    // 집중력을 코인으로 하지말고 게임당 5개정도 두는것도 좋아보임
+
+
     void SafeAction() // 안전 액션 
     {
         Debug.Log("안전 액션!");
@@ -196,6 +243,8 @@ public class TurnManager : MonoBehaviour
             characters[characterIdx].coinCounts--; //코인 1개 소모
 
             groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 캐릭터의 이름을 넘겨주고 점령
+            characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+
             state = GameState.ConfirmEndTurn;
         }
         else if (ownerGround == 2) // 적 땅
@@ -203,11 +252,9 @@ public class TurnManager : MonoBehaviour
             characters[characterIdx].coinCounts--;
             state = GameState.ConfirmEndTurn;
         }
-        else // 코인을 더 주던가 턴을 더주던가 선택
+        else // 내땅 그냥 넘어가기
         {
             state = GameState.ConfirmEndTurn;
-            Debug.Log(" 내땅 밟음");
-            return;
         }
         uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
     }
@@ -216,28 +263,180 @@ public class TurnManager : MonoBehaviour
         Debug.Log("투자액션!");
         bool isSuccess = true;
         // 땅 주인에 따라 다르게 하기
-        //일단 2개 고정 투자해서 돌리는걸로
-        characters[characterIdx].coinCounts -= 2; // 2개 소모해서 투자
-        //동전 플립
-        for(int i = 0; i<  2; i++)
+        //빈땅
+        if (ownerGround == 0 || ownerGround == 1) //빈땅 혹은 내땅
         {
-            if (!characters[characterIdx].CoinFlip(50))
+            characters[characterIdx].coinCounts -= 2; // 2개 소모해서 투자
+
+                                                      //동전 플립
+            for (int i = 0; i < 2; i++)
             {
-                isSuccess = false;
-               //실패!
-            }// 일단 각 50퍼 
+                if (!characters[characterIdx].CoinFlip(investPersent)) // 확률 적용
+                {
+                    isSuccess = false;
+                    //실패!
+                }
+
+            }
+            uiManager.ShowActionCoinTossUI(characters[characterIdx].coinFlipResult);
+            characters[characterIdx].coinFlipResult.Clear();
+            if (isSuccess) // 성공
+            {
+                groundManager.OccupyThreeGround(characters[characterIdx].GetCharacterType());
+                characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+                characters[characterIdx].ownedTiles.Add(groundManager.near1); // 캐릭터의 소유 리스트로 관리
+                characters[characterIdx].ownedTiles.Add(groundManager.near2); // 캐릭터의 소유 리스트로 관리
+            }
+            
+            state = GameState.ConfirmEndTurn;
+            uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+        }
+
+        else // 적 땅
+        {
+            // issuccess 가 false 면 땅 하나 빼앗기게 하기
+            selectMode = characters[characterIdx].SelectInvestMode();
+            if (selectMode > 0)
+            {
+                state = GameState.InvestCustom;
+            }
+        }
+
+    }
+    // 2개 투자하는 턴 , 3개 투자하는 턴 구현하기
+    void InvestCustom()
+    {
+        bool isSuccess = true;
+        if (selectMode == 1)
+        {
+            Debug.Log("2개 투자합니다!");
+            // 동전 2개 플립한 후 전부 성공시 땅 빼았기 
+            characters[characterIdx].coinCounts -= 2; // 2개 투자
+            uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+
+            investPersent += 15; // 일단 65퍼센트로 
+
+            for (int i = 0; i < 2; i++)
+            {
+                if (!characters[characterIdx].CoinFlip(investPersent)) // 확률 적용
+                {
+                    isSuccess = false;
+                    //실패!
+                }
+            }
+            uiManager.ShowActionCoinTossUI(characters[characterIdx].coinFlipResult);
+            characters[characterIdx].coinFlipResult.Clear();
+            if(isSuccess)
+            {
+                groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 해당 땅 빼았기 성공
+                characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+                characters[otherIdx].ownedTiles.Remove(groundManager.curGround);// 상대방 리스트에서 제거
+                Debug.Log("땅 빼았기 성공!");
+            }
+            else
+            {
+                // 캐릭터의 소유물 리스트에서 숫자를 하나 랜덤으로 구한다.
+                if (characters[characterIdx].ownedTiles.Count == 0)
+                {
+                    Debug.Log("뺏길 땅도 없네요?");
+                }
+                else
+                {
+                    int steelGround = Random.Range(0, characters[characterIdx].ownedTiles.Count); // 2개면 0~1 중에 하나 리턴 
+                    string steelName = characterIdx == 0 ? "Enemy" : "Player"; // 뺐기는 거니까 반대로
+                    
+                    characters[characterIdx].ownedTiles[steelGround].Occupied(steelName);
+                    characters[otherIdx].ownedTiles.Add(characters[characterIdx].ownedTiles[steelGround]); // 땅 점령과 동시에 적의 리스트에 추가
+                    characters[characterIdx].ownedTiles.RemoveAt(steelGround); // 나한테서 해당 인덱스 그라운드 삭제
+                   
+                    Debug.Log(" 땅을 뺐겼습니다.");
+                }
+                
+            }
             
         }
-        uiManager.ShowActionCoinTossUI(characters[characterIdx].coinFlipResult);
-        //actionCoinTossUI.ShowCoinResult(characters[characterIdx].coinFlipResult);
-        characters[characterIdx].coinFlipResult.Clear();
-        if (isSuccess) // 성공
+        else
         {
-            groundManager.OccupyThreeGround(characters[characterIdx].GetCharacterType());
+            //동전 3개 플립 후 전부 성공시 해당 땅 + 적 보유땅 2개 빼았기
+            Debug.Log("3개 투자합니다!");
+            characters[characterIdx].coinCounts -= 3; // 3개 투자
+            uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+
+            investPersent += 20; // 일단 동전당 70퍼센트로 상향 
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (!characters[characterIdx].CoinFlip(investPersent)) // 확률 적용
+                {
+                    isSuccess = false;
+                    //실패!
+                }
+            }
+            uiManager.ShowActionCoinTossUI(characters[characterIdx].coinFlipResult);
+            characters[characterIdx].coinFlipResult.Clear();
+            if(isSuccess) //성공시 땅 빼았기!
+            {
+                groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 해당 땅 빼았기 성공
+                characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+                characters[otherIdx].ownedTiles.Remove(groundManager.curGround);// 상대방 리스트에서 제거
+
+                Debug.Log("땅 빼았기 성공!");
+                // 랜덤땅 2개 빼았기 -> 조건 추가하기 // 적의 땅이 1개면 한번만 , 0개면 넘어가기
+                int ground = 2; // 기본 2번 빼았음
+
+                if (characters[otherIdx].ownedTiles.Count == 1)
+                {
+                    ground = 1;
+                    Debug.Log("빼앗을 땅이 하나밖에 없네요... 코인을 한개 돌려드릴게요");
+                    characters[characterIdx].coinCounts += 1;
+                }
+                else if(characters[otherIdx].ownedTiles.Count == 0)
+                {
+                    ground = 0;
+                    Debug.Log("빼앗을 땅이 없네요... 코인을 돌려드릴게요");
+                    characters[characterIdx].coinCounts += 3;
+                }
+                uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+
+                for (int i = 0; i < ground; i++)
+                {
+                    int steelGround = Random.Range(0, characters[otherIdx].ownedTiles.Count); // 적이가진 땅들 중 하나를 가져옴
+                    string steelName = characterIdx == 0 ? "Player" : "Enemy"; // 빼았는 거니까 제대로 ;
+
+                    characters[otherIdx].ownedTiles[steelGround].Occupied(steelName); //적의 땅 빼았기
+                    characters[characterIdx].ownedTiles.Add(characters[otherIdx].ownedTiles[steelGround]); //빼았아서 내 리스트에 넣기
+                    characters[otherIdx].ownedTiles.RemoveAt(steelGround); // 적의 해당 인덱스 그라운드 삭제
+                    Debug.Log("땅을 빼았았습니다.");
+                }
+
+            }
+            else
+            {
+                // 캐릭터의 소유물 리스트에서 숫자를 하나 랜덤으로 구한다.
+                if (characters[characterIdx].ownedTiles.Count == 0)
+                {
+                    Debug.Log("뺏길 땅도 없네요?");
+                }
+                else
+                {
+                    int steelGround = Random.Range(0, characters[characterIdx].ownedTiles.Count); // 2개면 0~1 중에 하나 리턴 
+                    string steelName = characterIdx == 0 ? "Enemy" : "Player"; // 뺐기는 거니까 반대로
+
+                    characters[characterIdx].ownedTiles[steelGround].Occupied(steelName);
+                    characters[otherIdx].ownedTiles.Add(characters[characterIdx].ownedTiles[steelGround]); // 땅 점령과 동시에 적의 리스트에 추가
+                    characters[characterIdx].ownedTiles.RemoveAt(steelGround); // 나한테서 해당 인덱스 그라운드 삭제
+
+                    Debug.Log(" 땅을 뺐겼습니다.");
+                }
+
+            }
+
         }
-        state = GameState.ConfirmEndTurn;
         uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+
+        state = GameState.ConfirmEndTurn; // 턴 넘기기
     }
+    
     IEnumerator ConfirmEndTurn()
     {
         if (characterIdx == 0)
@@ -275,6 +474,8 @@ public class TurnManager : MonoBehaviour
         ownerGround = 0;
         ownerName = null;
 
+        investPersent = 50; // 투자확률 초기화
+        selectMode = 0; // 투자 모드 초기화
         state = GameState.StartTurn;
         
         

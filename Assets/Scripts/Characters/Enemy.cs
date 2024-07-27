@@ -24,5 +24,20 @@ public class Enemy : Character
             return 2;
 
     }
+    public override int SelectInvestMode()
+    {
+        int enemyAction = -1;
+        if (enemyAction == -1)// 1회만
+            enemyAction = Random.Range(0, 101);
+
+        if (enemyAction <50) //반반 확률로 2,3 투자 선택
+        {
+            return 1;// 2칸 점령
+        }
+        else 
+        {
+            return 2;
+        }
+    }
 }
 
