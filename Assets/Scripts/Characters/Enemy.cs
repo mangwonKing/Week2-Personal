@@ -34,7 +34,7 @@ public class Enemy : Character
         if (enemyAction == -1)// 1회만
             enemyAction = Random.Range(0, 101);// 0 ~49는 안전 ,50~ 100 은 투자
 
-        if (enemyAction < 50)
+        if (enemyAction < 30) // 적 수치 테스트
             return 1;
         else
             return 2;
@@ -46,7 +46,7 @@ public class Enemy : Character
         if (enemyAction == -1)// 1회만
             enemyAction = Random.Range(0, 101);
 
-        if (enemyAction <50) //반반 확률로 2,3 투자 선택
+        if (enemyAction <30) // 4 : 6 으로 2, 3 투자 선택
         {
             return 1;// 2칸 점령
         }

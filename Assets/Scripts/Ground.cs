@@ -20,8 +20,6 @@ public class Ground : MonoBehaviour
     SpriteRenderer spriteRenderer;
     
     public BoardMapGenerator boardMapGenerator;
-    //월드 이벤트 유무
-    bool isWorldEvent = false;
     [SerializeField]
     int posX;
     [SerializeField]
@@ -75,10 +73,12 @@ public class Ground : MonoBehaviour
         if (ownerName == "Player")
         {
             owner = Owner.Player;
+            //파란 파티클 재생
         }
         else
         {
             owner = Owner.Enemy;
+            //빨간 파티클 재생
         }
         ColorChange();
 

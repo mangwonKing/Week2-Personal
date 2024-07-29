@@ -12,6 +12,8 @@ public class UIManager : MonoBehaviour
     public CoinTossUI actionCoinTossUI;
     public CoinCountUI playerCoinCountUI;
     public CoinCountUI EnemyCoinCountUI;
+    public GroundUI playerGroundUI;
+    public GroundUI enemyGroundUI;
 
     //이동 주사위 선택
     public Canvas selectMoveCoinCanvas;
@@ -27,17 +29,20 @@ public class UIManager : MonoBehaviour
     public Canvas investSelectButtonCanvas;
 
     //움직임 동전
-    public Button button1;
-    public Button button2;
-    public Button button3;
+    public Button selectOnebutton;
+    public Button selectTwobutton2;
+    public Button selectThreebutton3;
 
     //행동 선택 버튼
-    public Button button4; // 안전
-    public Button button5; // 투자 
+    public Button safeButton; // 안전
+    public Button investButton; // 투자 
 
     //투자 선택 버튼 
-    public Button button6;// 2개
-    public Button button7;// 3개 
+    public Button investTwoButton;// 2개
+    public Button investThreeButton;// 3개 
+
+
+
 
     //투자 결과
     public List<TextMeshProUGUI> investResultText;
@@ -56,20 +61,32 @@ public class UIManager : MonoBehaviour
     int selectInvestType = 0;
     int selectTurnOver = 0;
 
+    public TextMeshProUGUI enoughCoin;
     // Start is called before the first frame update
     void Start()
     {
-        button1.onClick.AddListener(() => OnButtonClick(1));
-        button2.onClick.AddListener(() => OnButtonClick(2));
-        button3.onClick.AddListener(() => OnButtonClick(3));
+        selectOnebutton.onClick.AddListener(() => OnButtonClick(1));
+        selectTwobutton2.onClick.AddListener(() => OnButtonClick(2));
+        selectThreebutton3.onClick.AddListener(() => OnButtonClick(3));
 
-        button4.onClick.AddListener(() => OnActionButtonClick(1)); //1 은 안전
-        button5.onClick.AddListener(() => OnActionButtonClick(2)); //2 는 투자
+        safeButton.onClick.AddListener(() => OnActionButtonClick(1)); //1 은 안전
+        investButton.onClick.AddListener(() => OnActionButtonClick(2)); //2 는 투자
 
-        button6.onClick.AddListener(() => OnInvestButtonClick(1)); //1 은 2
-        button7.onClick.AddListener(() => OnInvestButtonClick(2)); //2 는 3개 투자
+        investTwoButton.onClick.AddListener(() => OnInvestButtonClick(1)); //1 은 2
+        investThreeButton.onClick.AddListener(() => OnInvestButtonClick(2)); //2 는 3개 투자
 
         button8.onClick.AddListener(() => OnTurnOverButtonClick(1)); // 턴 넘기기
+
+    }
+    public void ShowNotEnoughCoin()
+    {
+        enoughCoin.gameObject.SetActive(true);
+        StartCoroutine(ShowNotEnoughCoinCor());
+    }
+    IEnumerator ShowNotEnoughCoinCor()
+    {
+        yield return new WaitForSeconds(1);
+        enoughCoin.gameObject.SetActive(false);
     }
     public void ShowInvestResult(bool result)
     {
@@ -244,6 +261,16 @@ public class UIManager : MonoBehaviour
         {
             EnemyCoinCountUI.ShowCoinCount(coin);
         }
-        
+    }
+    public void ShowGroundCount(int ground, int idx)
+    {
+        if (idx == 0)
+        {
+            playerGroundUI.ShowGroundCount(ground);
+        }
+        else
+        {
+            enemyGroundUI.ShowGroundCount(ground);
+        }
     }
 }

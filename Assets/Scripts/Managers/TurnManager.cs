@@ -17,6 +17,7 @@ public class TurnManager : MonoBehaviour
         SelectAction,
         SafeAction,
         InvestAction,
+        FocusSelect,
         InvestCustom,
         InvestCheck,
         ConfirmEndTurn,
@@ -103,7 +104,6 @@ public class TurnManager : MonoBehaviour
             yield return null;
         }
     }
-
     void StartTurn()
     {
         if (characters[0].coinCounts <= 0 && characters[1].coinCounts <= 0)
@@ -130,7 +130,17 @@ public class TurnManager : MonoBehaviour
         uiManager.SelectMoveCoinViewOn(characterIdx); // 적과 나 중 적절한 ui 출력
 
         coinCount = characters[characterIdx].GetSelectedCoinCount();
-        
+        //여기서 코인 개수가 부족하다면 선택을 못하게 해야할듯?
+        if (characters[characterIdx].coinCounts < coinCount && coinCount != 0)
+        {
+            // 코인 
+            if(characterIdx ==0)
+            {
+                uiManager.ShowNotEnoughCoin();
+                Debug.Log("코인이 부족합니다.");
+            }
+            coinCount = 0;
+        }
         if (coinCount > 0)
         {
             Debug.Log("이동 동전 선택!");
@@ -167,6 +177,7 @@ public class TurnManager : MonoBehaviour
         {
             state = GameState.CheckOwner;
             uiManager.MoveResultOff();// 이동 완료했으니 끄기
+            
         }
     }
     void CheckOwner()
@@ -192,11 +203,19 @@ public class TurnManager : MonoBehaviour
             ownerGround = 2;
         }
         //Debug.Log(ownerName + "땅 입니다.");
-        if(characterIdx == 0)
-            uiManager.GroundInfoOn(ownerGround); // 플레이어는 ui 키기
         
-        state = GameState.SelectAction;
-        
+        if (characters[characterIdx].coinCounts == 0) // 코인이 0개면 턴 종료시키기
+        {
+            //uiManager.ShowNotEnoughCoin();
+            Debug.Log("코인을 다 썼습니다.");
+            state = GameState.ConfirmEndTurn;
+        }
+        else
+        {
+            if (characterIdx == 0)
+                uiManager.GroundInfoOn(ownerGround); // 플레이어는 ui 키기
+            state = GameState.SelectAction;
+        }
     }
     void CalculatePersent(List<string> list)
     {
@@ -217,7 +236,17 @@ public class TurnManager : MonoBehaviour
         if (characterIdx == 0)
             uiManager.ActionSelectButtonOn();
         playerAction = characters[characterIdx].SelectAction(); // 플레이어가 투자를 할지 안전을 할지 선택
-        
+
+        if (characters[characterIdx].coinCounts < playerAction &&  playerAction != 0)
+        {
+            if (characterIdx == 0)
+            {
+                uiManager.ShowNotEnoughCoin();
+                Debug.Log("코인이 부족합니다.");
+            }
+            playerAction = 0;
+        }
+
         if (playerAction > 0)
         {
             Debug.Log("행동 : " + playerAction); 
@@ -254,6 +283,7 @@ public class TurnManager : MonoBehaviour
 
             groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 캐릭터의 이름을 넘겨주고 점령
             characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+            uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 땅 얻음 최신화
 
             state = GameState.ConfirmEndTurn;
         }
@@ -294,12 +324,10 @@ public class TurnManager : MonoBehaviour
             if (isSuccess) // 성공
             {
                 groundManager.OccupyThreeGround(characters[characterIdx].GetCharacterType());
-                ownedCheck(groundManager.curGround);
-                ownedCheck(groundManager.near1);
-                ownedCheck(groundManager.near2);
-                //characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
-                //characters[characterIdx].ownedTiles.Add(groundManager.near1); // 캐릭터의 소유 리스트로 관리
-                //characters[characterIdx].ownedTiles.Add(groundManager.near2); // 캐릭터의 소유 리스트로 관리
+                OwnedCheck(groundManager.curGround);
+                OwnedCheck(groundManager.near1);
+                OwnedCheck(groundManager.near2);
+                uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 땅 얻음 최신화
             }
             //투자-> 투자체크 상태로 넘기기
             state = GameState.InvestCheck;
@@ -314,6 +342,15 @@ public class TurnManager : MonoBehaviour
             // 여기에 이제 2가지 투자에 대한 선택지 ui 를 띄우고 
             uiManager.InvestSelectButtonOn(); // on
             selectMode = characters[characterIdx].SelectInvestMode();
+            if(selectMode+1 > characters[characterIdx].coinCounts && selectMode != 0)
+            {
+                if (characterIdx == 0)
+                {
+                    uiManager.ShowNotEnoughCoin();
+                    Debug.Log("코인이 부족합니다.");
+                }
+                selectMode = 0;
+            }
             if (selectMode > 0)
             {
                 state = GameState.InvestCustom;
@@ -322,7 +359,7 @@ public class TurnManager : MonoBehaviour
         }
 
     }
-    void ownedCheck(Ground ground)
+    void OwnedCheck(Ground ground)
     {
         bool flag = false;
         bool flag2 = false;
@@ -388,6 +425,8 @@ public class TurnManager : MonoBehaviour
                 groundManager.OccupyGround(characters[characterIdx].GetCharacterType()); // 해당 땅 빼았기 성공
                 characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
                 characters[otherIdx].ownedTiles.Remove(groundManager.curGround);// 상대방 리스트에서 제거
+                uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 땅 얻음 최신화
+                uiManager.ShowGroundCount(characters[otherIdx].ownedTiles.Count, otherIdx); // 땅 잃음 최신화
                 Debug.Log("땅 빼았기 성공!");
             }
             else
@@ -405,7 +444,9 @@ public class TurnManager : MonoBehaviour
                     characters[characterIdx].ownedTiles[steelGround].Occupied(steelName);
                     characters[otherIdx].ownedTiles.Add(characters[characterIdx].ownedTiles[steelGround]); // 땅 점령과 동시에 적의 리스트에 추가
                     characters[characterIdx].ownedTiles.RemoveAt(steelGround); // 나한테서 해당 인덱스 그라운드 삭제
-                   
+
+                    uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 나 땅 잃음 최신화
+                    uiManager.ShowGroundCount(characters[otherIdx].ownedTiles.Count, otherIdx); // 상대 땅 얻음 최신화
                     Debug.Log(" 땅을 뺐겼습니다.");
                 }
                 
@@ -466,6 +507,8 @@ public class TurnManager : MonoBehaviour
                     characters[otherIdx].ownedTiles.RemoveAt(steelGround); // 적의 해당 인덱스 그라운드 삭제
                     Debug.Log("땅을 빼았았습니다.");
                 }
+                uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 땅 얻음 최신화
+                uiManager.ShowGroundCount(characters[otherIdx].ownedTiles.Count, otherIdx); // 땅 잃음 최신화
 
             }
             else
@@ -484,6 +527,8 @@ public class TurnManager : MonoBehaviour
                     characters[otherIdx].ownedTiles.Add(characters[characterIdx].ownedTiles[steelGround]); // 땅 점령과 동시에 적의 리스트에 추가
                     characters[characterIdx].ownedTiles.RemoveAt(steelGround); // 나한테서 해당 인덱스 그라운드 삭제
 
+                    uiManager.ShowGroundCount(characters[characterIdx].ownedTiles.Count, characterIdx); // 땅 잃음 최신화
+                    uiManager.ShowGroundCount(characters[otherIdx].ownedTiles.Count, otherIdx); // 땅 얻음 최신화
                     Debug.Log(" 땅을 뺐겼습니다.");
                 }
 
@@ -494,9 +539,12 @@ public class TurnManager : MonoBehaviour
         state = GameState.InvestCheck; //결과확인
         //state = GameState.ConfirmEndTurn; // 턴 넘기기
     }
-    
+    // 투자를 선택하면 집중력을 사용하시겠습니까 상태로 이동
+    // 일단 한개만 적용되도록 만들기
+
     IEnumerator ConfirmEndTurn()
     {
+        
         if (characterIdx == 0)
         {
             //Debug.Log("턴을 넘기겠습니까? (F 키를 눌러 확인)");
@@ -522,6 +570,9 @@ public class TurnManager : MonoBehaviour
     {
         Debug.Log("턴 종료 남은코인 : " + characters[characterIdx].coinCounts);
         Debug.Log("턴 종료  플레이어땅 : " + characters[0].ownedTiles.Count + " 적 땅: " + characters[1].ownedTiles.Count);
+
+        uiManager.ShowGroundCount(characters[0].ownedTiles.Count, 0); // 내 땅 최신화
+        uiManager.ShowGroundCount(characters[1].ownedTiles.Count, 1); // 적 땅 최신화
         // 턴 종료 로직
         characters[characterIdx].useMoveCoin = 0; // 적을 위한 이동코인 초기화 
        

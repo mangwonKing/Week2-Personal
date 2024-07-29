@@ -96,7 +96,9 @@ public class Character : MonoBehaviour
     
     public bool CoinFlip(float persentage) // 0~100 중에 50미만이 나오면 뒷면 실패 , 이상이 나오면 앞면 성공 
     {
-        if(Random.Range(0,100) < 100 - persentage) // 60퍼면 0~40 이 실패 , 70퍼면 0~30이 실패 
+        int invisibleHand = 0;
+        if (type == Type.Enemy) invisibleHand += 10; //적은 10퍼 확률을 더준다.
+        if(Random.Range(0,100) < 100 - (persentage + invisibleHand)) // 60퍼면 0~40 이 실패 , 70퍼면 0~30이 실패 
         {
             Debug.Log("실패!");
             coinFlipResult.Add(false); // 코인 플립의 결과를 저장
