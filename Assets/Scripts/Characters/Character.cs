@@ -133,7 +133,7 @@ public class Character : MonoBehaviour
             posX = nx; posY = ny;
             Debug.Log(posX + "," + posY + "로 이동");
             moveCount--;// 이동횟수 감소
-            yield return new WaitForSeconds(0.25f);
+            yield return new WaitForSeconds(0.5f);
         }
         isMoveEnd = true;
 

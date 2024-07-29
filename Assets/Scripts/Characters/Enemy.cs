@@ -20,8 +20,8 @@ public class Enemy : Character
     IEnumerator WaitSelectTime()
     {
         
-        yield return new WaitForSeconds(1f);
-        Debug.Log("적 선택중!");
+        yield return new WaitForSeconds(2f);
+        //Debug.Log("적 선택중!");
         useMoveCoin = Random.Range(1, 4); // 1~3 개중 랜덤하게 선택
         isSelect = false;
 

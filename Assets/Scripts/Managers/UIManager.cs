@@ -39,10 +39,22 @@ public class UIManager : MonoBehaviour
     public Button button6;// 2개
     public Button button7;// 3개 
 
+    //투자 결과
+    public List<TextMeshProUGUI> investResultText;
+
+
+    //턴 종료 버튼
+    public Button button8;
+
+    public Canvas turnOverCanavas;
+    public Canvas enemyTurnOverCanvas;
+
+    public List<TextMeshProUGUI> resultText;
 
     int selectMoveCoin = 0;
     int selectActionCoin = 0;
     int selectInvestType = 0;
+    int selectTurnOver = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -56,7 +68,54 @@ public class UIManager : MonoBehaviour
 
         button6.onClick.AddListener(() => OnInvestButtonClick(1)); //1 은 2
         button7.onClick.AddListener(() => OnInvestButtonClick(2)); //2 는 3개 투자
+
+        button8.onClick.AddListener(() => OnTurnOverButtonClick(1)); // 턴 넘기기
     }
+    public void ShowInvestResult(bool result)
+    {
+        if(result)
+            investResultText[0].gameObject.SetActive(true);
+        else
+            investResultText[1].gameObject.SetActive(true);
+    }
+    public void OffInvestResult(bool result)
+    {
+        if (result)
+            investResultText[0].gameObject.SetActive(false);
+        else
+            investResultText[1].gameObject.SetActive(false);
+    }
+    public void ShowGameResult(int result)
+    {
+        resultText[result].gameObject.SetActive(true); // 0 은 승리 . 1 은 무승부 .2 는 패배
+    }
+    public void OnTurnOverButtonClick(int select)
+    {
+        selectTurnOver = 1;
+    }
+    public int GetTurnOver()
+    {
+        return selectTurnOver;
+    }
+    public void EnemyTurnOverOn()
+    {
+        enemyTurnOverCanvas.gameObject.SetActive(true);
+    }
+    public void EnemyTurnOverOff()
+    {
+        enemyTurnOverCanvas.gameObject.SetActive(false);
+    }
+    public void TurnOverOn()
+    {
+       
+        turnOverCanavas.gameObject.SetActive(true);
+    }
+    public void TurnOverOff()
+    {
+        selectTurnOver = 0;
+        turnOverCanavas.gameObject.SetActive(false);
+    }
+
     //이동 ui 켜고 끄기
     public void SelectMoveCoinViewOn(int idx)
     {

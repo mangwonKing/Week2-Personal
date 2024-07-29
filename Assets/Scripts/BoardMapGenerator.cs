@@ -31,6 +31,10 @@ public class BoardMapGenerator : MonoBehaviour
     {
         for (int x = 0; x < gridWidth; x++)
         {
+            if (tileMap[x,gridHeight-1] != null)
+            {
+                continue;
+            }
             Vector3 tilePosition = new Vector3(x, gridHeight - 1, 0);
             GameObject tile = Instantiate(hexTilePrefab, tilePosition, Quaternion.Euler(0, 0, 0));
             
@@ -45,6 +49,10 @@ public class BoardMapGenerator : MonoBehaviour
         // 하단 가장자리 타일 생성
         for (int x = 0; x < gridWidth; x++)
         {
+            if (tileMap[x, 0] != null)
+            {
+                continue;
+            }
             Vector3 tilePosition = new Vector3(x, 0, 0);
             GameObject tile = Instantiate(hexTilePrefab, tilePosition, Quaternion.Euler(0, 0, 0));
             tile.transform.parent = this.transform;
@@ -56,6 +64,10 @@ public class BoardMapGenerator : MonoBehaviour
         // 좌측 가장자리 타일 생성
         for (int y = 0; y < gridHeight; y++)
         {
+            if (tileMap[0, y] != null)
+            {
+                continue;
+            }
             Vector3 tilePosition = new Vector3(0, y, 0);
             GameObject tile = Instantiate(hexTilePrefab, tilePosition, Quaternion.Euler(0, 0, 0));
             tile.transform.parent = this.transform;
@@ -67,6 +79,10 @@ public class BoardMapGenerator : MonoBehaviour
         // 우측 가장자리 타일 생성
         for (int y = 0; y < gridHeight; y++)
         {
+            if (tileMap[gridWidth - 1, y] != null)
+            {
+                continue;
+            }
             Vector3 tilePosition = new Vector3(gridWidth - 1, y, 0);
             GameObject tile = Instantiate(hexTilePrefab, tilePosition, Quaternion.Euler(0, 0, 0));
             tile.transform.parent = this.transform;

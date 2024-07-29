@@ -18,6 +18,7 @@ public class TurnManager : MonoBehaviour
         SafeAction,
         InvestAction,
         InvestCustom,
+        InvestCheck,
         ConfirmEndTurn,
         EndTurn,
         EndGame
@@ -40,13 +41,12 @@ public class TurnManager : MonoBehaviour
     int otherIdx;
     //게임 상태관리
     private GameState state;
-
     void Start()
     {
         characterIdx = 0;
         state = GameState.StartTurn;
     }
-
+    bool isSuccess = false;
     string ownerName = null;
     public IEnumerator GameLoop()
     {
@@ -86,6 +86,9 @@ public class TurnManager : MonoBehaviour
                     break;
                 case GameState.InvestCustom:
                     InvestCustom();
+                    break;
+                case GameState.InvestCheck:
+                    yield return StartCoroutine(InvestCheck());// 결과 확인
                     break;
                 case GameState.ConfirmEndTurn:
                     yield return StartCoroutine(ConfirmEndTurn());
@@ -268,8 +271,9 @@ public class TurnManager : MonoBehaviour
     void InvestAction() // 투자 액션 
     {
         Debug.Log("투자액션!");
-        bool isSuccess = true;
+        isSuccess = true;
         // 땅 주인에 따라 다르게 하기
+        //investPersent = 100;// 테스트용 꼭 수정할것 !!
         //빈땅
         if (ownerGround == 0 || ownerGround == 1) //빈땅 혹은 내땅
         {
@@ -290,13 +294,18 @@ public class TurnManager : MonoBehaviour
             if (isSuccess) // 성공
             {
                 groundManager.OccupyThreeGround(characters[characterIdx].GetCharacterType());
-                characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
-                characters[characterIdx].ownedTiles.Add(groundManager.near1); // 캐릭터의 소유 리스트로 관리
-                characters[characterIdx].ownedTiles.Add(groundManager.near2); // 캐릭터의 소유 리스트로 관리
+                ownedCheck(groundManager.curGround);
+                ownedCheck(groundManager.near1);
+                ownedCheck(groundManager.near2);
+                //characters[characterIdx].ownedTiles.Add(groundManager.curGround); // 캐릭터의 소유 리스트로 관리
+                //characters[characterIdx].ownedTiles.Add(groundManager.near1); // 캐릭터의 소유 리스트로 관리
+                //characters[characterIdx].ownedTiles.Add(groundManager.near2); // 캐릭터의 소유 리스트로 관리
             }
-            
-            state = GameState.ConfirmEndTurn;
+            //투자-> 투자체크 상태로 넘기기
+            state = GameState.InvestCheck;
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
+            
+            
         }
 
         else // 적 땅
@@ -313,10 +322,47 @@ public class TurnManager : MonoBehaviour
         }
 
     }
+    void ownedCheck(Ground ground)
+    {
+        bool flag = false;
+        bool flag2 = false;
+        foreach (Ground ownedGround in characters[characterIdx].ownedTiles) //이미 있는데 또 add 하려고 한다?
+        {
+            if (ownedGround == ground)
+            {//이미 들어있다면
+                flag = true;
+                Debug.Log("이미 내땅이에요");
+            }
+            
+        }
+        foreach(Ground other in characters[otherIdx].ownedTiles)
+        {
+            if(other == ground) // 만약 적의 땅이라면
+            {
+                flag2 = true;
+            }
+        }
+        if(!flag)
+        {
+            characters[characterIdx].ownedTiles.Add(ground); // 안겹치니까 넣기
+        }
+        if(flag2)
+        {
+            characters[otherIdx].ownedTiles.Remove(ground); // 적의 소유권 뺐기
+            Debug.Log("적의 땅까지 뺐었네요");
+        }
+    }
+    IEnumerator InvestCheck()
+    {
+        uiManager.ShowInvestResult(isSuccess);
+        yield return new WaitForSeconds(2f);
+        state = GameState.ConfirmEndTurn; //종료 확인 후 상태 넘기기
+        uiManager.OffInvestResult(isSuccess);
+    }
     // 2개 투자하는 턴 , 3개 투자하는 턴 구현하기
     void InvestCustom()
     {
-        bool isSuccess = true;
+        isSuccess = true;
         if (selectMode == 1)
         {
             Debug.Log("2개 투자합니다!");
@@ -445,32 +491,37 @@ public class TurnManager : MonoBehaviour
 
         }
         uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
-
-        state = GameState.ConfirmEndTurn; // 턴 넘기기
+        state = GameState.InvestCheck; //결과확인
+        //state = GameState.ConfirmEndTurn; // 턴 넘기기
     }
     
     IEnumerator ConfirmEndTurn()
     {
         if (characterIdx == 0)
         {
-            Debug.Log("턴을 넘기겠습니까? (F 키를 눌러 확인)");
-
-            while (!Input.GetKeyDown(KeyCode.F))
+            //Debug.Log("턴을 넘기겠습니까? (F 키를 눌러 확인)");
+            uiManager.TurnOverOn();
+            while (uiManager.GetTurnOver() == 0)
             {
-                yield return null; // F 키 입력을 기다림
+                yield return null; // 버튼 눌리길 기다림
             }
+            //Debug.Log("턴 종료!");
+            
         }
         else
         {
+            uiManager.EnemyTurnOverOn();
             Debug.Log("컴퓨터의 턴이 끝났습니다.");
-            yield return new WaitForSeconds(3f); // 약간의 딜레이 추가 (선택 사항)
+            yield return new WaitForSeconds(2f); // 약간의 딜레이 추가 (선택 사항)
         }
-
+        uiManager.TurnOverOff();
+        uiManager.EnemyTurnOverOff();
         state = GameState.EndTurn;
     }
     void EndTurn()
     {
         Debug.Log("턴 종료 남은코인 : " + characters[characterIdx].coinCounts);
+        Debug.Log("턴 종료  플레이어땅 : " + characters[0].ownedTiles.Count + " 적 땅: " + characters[1].ownedTiles.Count);
         // 턴 종료 로직
         characters[characterIdx].useMoveCoin = 0; // 적을 위한 이동코인 초기화 
        
@@ -480,14 +531,15 @@ public class TurnManager : MonoBehaviour
             //다음 캐릭터가 코인이 없으니 턴은 오지 않음
             characterIdx = (characterIdx + 1) % characters.Length;
         }
-         //다음 플레이어를 위해 턴에서 사용했던것들 초기화
+        //다음 플레이어를 위해 턴에서 사용했던것들 초기화
+        isSuccess = false;
         playerAction = 0;
         coinCount = 0;
         moveCount = 0;
         ownerGround = 0;
         ownerName = null;
         uiManager.SetSelectedCoinCount();// 버튼 초기화
-        investPersent = 50; // 투자확률 초기화
+        investPersent = 70; // 투자확률 초기화
         selectMode = 0; // 투자 모드 초기화
         state = GameState.StartTurn;
         
@@ -495,7 +547,23 @@ public class TurnManager : MonoBehaviour
     }
     void EndGame()
     {
-        Debug.Log("게임종료");
+        int result = -1;
+        if (characters[0].ownedTiles.Count > characters[1].ownedTiles.Count)
+        {
+            Debug.Log("플레이어:" + characters[0].ownedTiles.Count + " 적: " + characters[1].ownedTiles.Count);
+            result = 0;
+        }
+        else if(characters[0].ownedTiles.Count == characters[1].ownedTiles.Count)
+        {
+            Debug.Log("플레이어:" + characters[0].ownedTiles.Count + " 적: " + characters[1].ownedTiles.Count);
+            result = 1;
+        }
+        else 
+        {
+            Debug.Log("플레이어:" + characters[0].ownedTiles.Count + " 적: " + characters[1].ownedTiles.Count);
+            result = 2; 
+        }
+        uiManager.ShowGameResult(result);
     }
     
 }
