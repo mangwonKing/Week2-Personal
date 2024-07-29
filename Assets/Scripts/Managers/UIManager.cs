@@ -66,6 +66,10 @@ public class UIManager : MonoBehaviour
     int selectTurnOver = 0;
 
     public TextMeshProUGUI enoughCoin;
+
+    public Button endRestartButton;
+    public Button endExitButton;
+    public Canvas endMenu;
     // Start is called before the first frame update
     void Start()
     {
@@ -84,6 +88,9 @@ public class UIManager : MonoBehaviour
         resumeButton.onClick.AddListener(OnResumeButtonClick);
         restartButton.onClick.AddListener(OnRestartButtonClick);
         exitButton.onClick.AddListener(OnExitButtonClick);
+
+        endRestartButton.onClick.AddListener(OnRestartButtonClick);
+        endExitButton.onClick.AddListener(OnExitButtonClick);
     }
     public void OnResumeButtonClick()
     {

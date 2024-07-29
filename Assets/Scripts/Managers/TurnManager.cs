@@ -60,7 +60,7 @@ public class TurnManager : MonoBehaviour
             switch (state)
             {
                 case GameState.Init:
-                    StartCoroutine(Init());
+                    yield return StartCoroutine(Init());
                     break;
                 case GameState.StartTurn:
                     StartTurn();
@@ -125,12 +125,6 @@ public class TurnManager : MonoBehaviour
         {
             otherIdx = characterIdx + 1 == 2 ? 0 : 1; // 상대방 인덱스 저장
             uiManager.InitCoinView();
-            // 턴 시작 로직
-            //if (!isSelectMoveCoin)
-            //{
-            //    //Debug.Log("턴시작!");
-            //    //state = GameState.SelectMoveCoin;
-            //}
             Debug.Log("턴시작!");
             state = GameState.SelectMoveCoin;
         }
@@ -625,6 +619,8 @@ public class TurnManager : MonoBehaviour
             result = 2; 
         }
         uiManager.ShowGameResult(result);
+        // 게임 재시작 OR 게임 종료
+        uiManager.endMenu.gameObject.SetActive(true);
     }
     
 }

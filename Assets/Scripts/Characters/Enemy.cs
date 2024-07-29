@@ -34,7 +34,7 @@ public class Enemy : Character
         if (enemyAction == -1)// 1회만
             enemyAction = Random.Range(0, 101);// 0 ~49는 안전 ,50~ 100 은 투자
 
-        if (enemyAction < 30) // 적 수치 테스트
+        if (enemyAction < 35) // 적 수치 테스트
             return 1;
         else
             return 2;
