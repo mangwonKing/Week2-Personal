@@ -60,6 +60,7 @@ public class Character : MonoBehaviour
     {
         transform.position = tile.tileMap[0, 0].transform.position + offset;
     }
+
     // 캐릭터가 수행할 기능
     // 1. 턴시작시 동전 개수 정하기
     public  virtual int GetSelectedCoinCount() //동전 일단 3개까지 

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 public class TurnManager : MonoBehaviour
 {
@@ -33,7 +34,7 @@ public class TurnManager : MonoBehaviour
     int playerAction = 0; //1 이 안전 2 가 투자
 
 
-    int investPersent = 50; // 기본 50 
+    int investPersent = 70; // 기본 70 
     int selectMode = 0;
 
     int otherIdx;
@@ -123,6 +124,8 @@ public class TurnManager : MonoBehaviour
     }
     void SelectMoveCoin()
     {
+        uiManager.SelectMoveCoinViewOn(characterIdx); // 적과 나 중 적절한 ui 출력
+
         coinCount = characters[characterIdx].GetSelectedCoinCount();
         
         if (coinCount > 0)
@@ -130,6 +133,8 @@ public class TurnManager : MonoBehaviour
             Debug.Log("이동 동전 선택!");
             characters[characterIdx].coinCounts -= coinCount; // 사용 코인만큼 차감 , 1회만
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts,characterIdx); // idx 로 캐릭터 구분
+            uiManager.SelectMoveCoinViewOff(characterIdx); // 선택 버튼 끄기
+
             state = GameState.MoveCoinFlip;
         }
     }
@@ -140,7 +145,7 @@ public class TurnManager : MonoBehaviour
         if (moveCount > 0)
         {
             Debug.Log("이동 동전 굴림!");
-            uiManager.ShowMoveCoinTossUI(characters[characterIdx].coinFlipResult);
+            uiManager.ShowMoveCoinTossUI(characters[characterIdx].coinFlipResult);// ui 매니저가 결과를 받네 그럼 이때 받은걸 바탕으로 출력하자.
             characters[characterIdx].coinFlipResult.Clear();// 다음을 위해 비우기
             state = GameState.Move;
         }
@@ -155,9 +160,10 @@ public class TurnManager : MonoBehaviour
     }
     void WaitMove()
     {
-        if (characters[characterIdx].isMoveEnd) //이동을 기다리도록 
+        if (characters[characterIdx].isMoveEnd) //이동을 기다리도록
         {
             state = GameState.CheckOwner;
+            uiManager.MoveResultOff();// 이동 완료했으니 끄기
         }
     }
     void CheckOwner()
@@ -182,8 +188,9 @@ public class TurnManager : MonoBehaviour
         {
             ownerGround = 2;
         }
-        Debug.Log(ownerName + "땅 입니다.");
-
+        //Debug.Log(ownerName + "땅 입니다.");
+        if(characterIdx == 0)
+            uiManager.GroundInfoOn(ownerGround); // 플레이어는 ui 키기
         
         state = GameState.SelectAction;
         
@@ -202,11 +209,28 @@ public class TurnManager : MonoBehaviour
         }
         Debug.Log("이번 땅에서 투자할 경우 확률은 " + investPersent + "%입니다.");
     }
+    /*
+     움직임 다 끝나면 -> 땅 정보 + 행동선택 버튼이 나오고 
+
+     확률을 변동하지말고 그냥 쭉 써놓자 그리고 적 선택당 몇퍼 낮아진다 이런거 쓰는게 좀 더 쉬운 로직같다.
+     빈땅 / 내땅
+     땅정보 + 행동선택 -> 결과 -> 턴 넘기기
+     적땅
+     땅정보 + 행동선택 -> 투자는 행동선택2 -> 결과 -> 턴 넘기기
+
+        땅 텍스트는 리스트에 담고 ownesrGround 숫자에 맞는 배열 출력하도록 하자.
+
+    플레이어는 이 과정이 다 필요하지만 컴퓨터의 경우는
+    어떤 행동을 선택했는지 그리고 그 결과 만 나오면 될 것 같다.
+     */
 
     void SelectAction()
     {
+        if (characterIdx == 0)
+            uiManager.ActionSelectButtonOn();
         playerAction = characters[characterIdx].SelectAction(); // 플레이어가 투자를 할지 안전을 할지 선택
-        if(playerAction > 0)
+        
+        if (playerAction > 0)
         {
             Debug.Log("행동 : " + playerAction); 
             if (playerAction == 1) // 안전
@@ -220,16 +244,16 @@ public class TurnManager : MonoBehaviour
 
                 state = GameState.InvestAction;
             }
+
+
+            if (characterIdx == 0)
+            {
+                uiManager.GroundInfoOff(ownerGround); // 액션 선택했으니 빠지기
+                uiManager.ActionSelectButtonOff();
+            }
+
         }
     }
-    //구조 개선: 투자를 하기 전에 확률이 어느정도 되는지 알아야 할 것 같은데..?
-    // 액션을 선택하기 전에 해당 땅의 투자정보를 미리 가져와서 알려주는 상태를 만들고 
-    // 그걸 보고 안전 or 투자를 선택할 수 있도록 하자.
-    // 투자 액션에서는 바로 해당 확률을 적용한다.
-
-    //집중력을 넣는다면 투자액션 들어가서 집중력을 사용하시겠습니까? 묻는 상태 만들고
-    // 집중력 1개당 동전확정 1개 들어가는걸로 보정
-    // 집중력을 코인으로 하지말고 게임당 5개정도 두는것도 좋아보임
 
 
     void SafeAction() // 안전 액션 
@@ -312,7 +336,8 @@ public class TurnManager : MonoBehaviour
             characters[characterIdx].coinCounts -= 2; // 2개 투자
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
 
-            investPersent += 15; // 일단 65퍼센트로 
+            //70퍼 그대로 갖기 일단은
+            //investPersent += 15; 
 
             for (int i = 0; i < 2; i++)
             {
@@ -360,7 +385,8 @@ public class TurnManager : MonoBehaviour
             characters[characterIdx].coinCounts -= 3; // 3개 투자
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
 
-            investPersent += 20; // 일단 동전당 70퍼센트로 상향 
+            //기본 70퍼로 하기
+            //investPersent += 20; // 일단 동전당 70퍼센트로 상향 
 
             for (int i = 0; i < 3; i++)
             {
@@ -458,7 +484,8 @@ public class TurnManager : MonoBehaviour
     {
         Debug.Log("턴 종료 남은코인 : " + characters[characterIdx].coinCounts);
         // 턴 종료 로직
-        
+        characters[characterIdx].useMoveCoin = 0; // 적을 위한 이동코인 초기화 
+       
         characterIdx = (characterIdx + 1) % characters.Length; // 플레이어 교체
         if (characters[characterIdx].coinCounts <= 0)
         {

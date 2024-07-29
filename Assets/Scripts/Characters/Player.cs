@@ -26,17 +26,9 @@ public class Player : Character
     }
     public override int SelectAction()
     {
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            return 1;
-            //SafePass(isEmpty);
-        }
-        else if(Input.GetKeyDown(KeyCode.D))
-        {
-            //InvestPass(isEmpty);
-            return 2;
-        }
-        return 0; //입력 여부
+        int action = 0;
+        action = uiManager.GetActionSelectedCoinCount();
+        return action;
         
     }
     public override int SelectInvestMode()

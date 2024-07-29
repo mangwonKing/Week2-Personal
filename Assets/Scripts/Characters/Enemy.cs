@@ -1,16 +1,32 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Enemy : Character
 {
-
+    bool isSelect = false;
     public override int GetSelectedCoinCount() //동전 일단 3개까지 
     {
-        Debug.Log("적 이동 선택!");
-        useMoveCoin = Random.Range(1, 4); // 1~3 개중 랜덤하게 선택
+        
+        if(!isSelect)
+        {
+            isSelect = true;
+            StartCoroutine(WaitSelectTime()); // 적 이동 선택을 보여주기 위한 장치
+        }
+       
         return useMoveCoin;
     }
+    IEnumerator WaitSelectTime()
+    {
+        
+        yield return new WaitForSeconds(1f);
+        Debug.Log("적 선택중!");
+        useMoveCoin = Random.Range(1, 4); // 1~3 개중 랜덤하게 선택
+        isSelect = false;
+
+    }
+    
     public override int SelectAction()
     {
 
