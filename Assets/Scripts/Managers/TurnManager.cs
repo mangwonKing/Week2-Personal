@@ -8,6 +8,7 @@ public class TurnManager : MonoBehaviour
 {
     public enum GameState
     {
+        Init,
         StartTurn,
         SelectMoveCoin,
         MoveCoinFlip,
@@ -45,7 +46,7 @@ public class TurnManager : MonoBehaviour
     void Start()
     {
         characterIdx = 0;
-        state = GameState.StartTurn;
+        state = GameState.Init;
     }
     bool isSuccess = false;
     string ownerName = null;
@@ -58,6 +59,9 @@ public class TurnManager : MonoBehaviour
         {
             switch (state)
             {
+                case GameState.Init:
+                    StartCoroutine(Init());
+                    break;
                 case GameState.StartTurn:
                     StartTurn();
                     break;
@@ -104,6 +108,12 @@ public class TurnManager : MonoBehaviour
             yield return null;
         }
     }
+    IEnumerator Init()
+    {
+        yield return new WaitForSeconds(1.5f);
+        state = GameState.StartTurn;
+    }
+
     void StartTurn()
     {
         if (characters[0].coinCounts <= 0 && characters[1].coinCounts <= 0)

@@ -4,9 +4,10 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
-
+using UnityEngine.SceneManagement;
 public class UIManager : MonoBehaviour
 {
+    public Canvas pauseMenu;
 
     public CoinTossUI moveCoinTossUI;
     public CoinTossUI actionCoinTossUI;
@@ -42,7 +43,10 @@ public class UIManager : MonoBehaviour
     public Button investThreeButton;// 3개 
 
 
-
+    // 일시정지 버튼
+    public Button resumeButton;
+    public Button restartButton;
+    public Button exitButton;
 
     //투자 결과
     public List<TextMeshProUGUI> investResultText;
@@ -77,6 +81,24 @@ public class UIManager : MonoBehaviour
 
         button8.onClick.AddListener(() => OnTurnOverButtonClick(1)); // 턴 넘기기
 
+        resumeButton.onClick.AddListener(OnResumeButtonClick);
+        restartButton.onClick.AddListener(OnRestartButtonClick);
+        exitButton.onClick.AddListener(OnExitButtonClick);
+    }
+    public void OnResumeButtonClick()
+    {
+        pauseMenu.gameObject.SetActive(false);
+        Time.timeScale = 1f;
+    }
+    public void OnRestartButtonClick()
+    {
+        SceneManager.LoadScene(1); // 재시작
+        Time.timeScale = 1f;
+    }
+    public void OnExitButtonClick()
+    {
+        Debug.Log("게임종료");
+        Application.Quit(); // 게임 종료
     }
     public void ShowNotEnoughCoin()
     {

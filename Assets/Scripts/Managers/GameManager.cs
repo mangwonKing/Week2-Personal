@@ -33,6 +33,11 @@ public class GameManager : MonoBehaviour
             
             StartCoroutine(turnManager.GameLoop());
         }
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            uiManager.pauseMenu.gameObject.SetActive(true); // 일시정지 키기
+            Time.timeScale = 0;
+        }
     }
 
 }
