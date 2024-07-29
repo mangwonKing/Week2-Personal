@@ -178,7 +178,7 @@ public class TurnManager : MonoBehaviour
         }
         else if (ownerName == characters[characterIdx].GetCharacterType())
         {
-            Debug.Log("내땅을 밟았네요 코인 보너스!");
+            //Debug.Log("내땅을 밟았네요 코인 보너스!");
             characters[characterIdx].coinCounts += 2; // 내땅은 코인 주고 행동 선택
             uiManager.ShowCoinCount(characters[characterIdx].coinCounts, characterIdx);
             ownerGround = 1;
@@ -207,23 +207,8 @@ public class TurnManager : MonoBehaviour
                 investPersent -= 10;
             }
         }
-        Debug.Log("이번 땅에서 투자할 경우 확률은 " + investPersent + "%입니다.");
+        //Debug.Log("이번 땅에서 투자할 경우 확률은 " + investPersent + "%입니다.");
     }
-    /*
-     움직임 다 끝나면 -> 땅 정보 + 행동선택 버튼이 나오고 
-
-     확률을 변동하지말고 그냥 쭉 써놓자 그리고 적 선택당 몇퍼 낮아진다 이런거 쓰는게 좀 더 쉬운 로직같다.
-     빈땅 / 내땅
-     땅정보 + 행동선택 -> 결과 -> 턴 넘기기
-     적땅
-     땅정보 + 행동선택 -> 투자는 행동선택2 -> 결과 -> 턴 넘기기
-
-        땅 텍스트는 리스트에 담고 ownesrGround 숫자에 맞는 배열 출력하도록 하자.
-
-    플레이어는 이 과정이 다 필요하지만 컴퓨터의 경우는
-    어떤 행동을 선택했는지 그리고 그 결과 만 나오면 될 것 같다.
-     */
-
     void SelectAction()
     {
         if (characterIdx == 0)
@@ -317,10 +302,13 @@ public class TurnManager : MonoBehaviour
         else // 적 땅
         {
             // issuccess 가 false 면 땅 하나 빼앗기게 하기
+            // 여기에 이제 2가지 투자에 대한 선택지 ui 를 띄우고 
+            uiManager.InvestSelectButtonOn(); // on
             selectMode = characters[characterIdx].SelectInvestMode();
             if (selectMode > 0)
             {
                 state = GameState.InvestCustom;
+                uiManager.InvestSelectButtonOff(); // 끄기
             }
         }
 

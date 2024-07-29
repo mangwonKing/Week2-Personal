@@ -33,15 +33,19 @@ public class Player : Character
     }
     public override int SelectInvestMode()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            return 1;// 2칸 점령
-        }
-        else if (Input.GetKeyDown(KeyCode.E))
-        {
-            return 2;
-        }
-        else return 0;
+        int invest = 0;
+        invest = uiManager.GetInvestType(); // 결과 받기
+        Debug.Log("투자선택" + invest);
+        //if (Input.GetKeyDown(KeyCode.Q))
+        //{
+        //    return 1;// 2칸 점령
+        //}
+        //else if (Input.GetKeyDown(KeyCode.E))
+        //{
+        //    return 2;
+        //}
+        //else return 0;
+        return invest; //invest 리턴
     }
 
 }

@@ -24,9 +24,7 @@ public class UIManager : MonoBehaviour
     //행동 선택
     public Canvas selectActionButtonCanvas;
 
-    //행동 결과 
-
-    //턴 넘기기
+    public Canvas investSelectButtonCanvas;
 
     //움직임 동전
     public Button button1;
@@ -37,8 +35,14 @@ public class UIManager : MonoBehaviour
     public Button button4; // 안전
     public Button button5; // 투자 
 
-    int selectCoin = 0;
-    int actionSelectCoin = 0;
+    //투자 선택 버튼 
+    public Button button6;// 2개
+    public Button button7;// 3개 
+
+
+    int selectMoveCoin = 0;
+    int selectActionCoin = 0;
+    int selectInvestType = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -49,6 +53,9 @@ public class UIManager : MonoBehaviour
 
         button4.onClick.AddListener(() => OnActionButtonClick(1)); //1 은 안전
         button5.onClick.AddListener(() => OnActionButtonClick(2)); //2 는 투자
+
+        button6.onClick.AddListener(() => OnInvestButtonClick(1)); //1 은 2
+        button7.onClick.AddListener(() => OnInvestButtonClick(2)); //2 는 3개 투자
     }
     //이동 ui 켜고 끄기
     public void SelectMoveCoinViewOn(int idx)
@@ -75,39 +82,54 @@ public class UIManager : MonoBehaviour
     }
     public void OnButtonClick(int coinCount)
     {
-        selectCoin = coinCount;
-        Debug.Log(coinCount + " 버튼 눌림!");
+        selectMoveCoin = coinCount;
+        //Debug.Log(coinCount + " 버튼 눌림!");
     }
     public void OnActionButtonClick(int coinCount)
     {
-        actionSelectCoin = coinCount;
-        Debug.Log(coinCount + " 버튼 눌림!");
+        selectActionCoin = coinCount;
+        //Debug.Log(coinCount + " 버튼 눌림!");
     }
-
+    public void OnInvestButtonClick(int investType)
+    {
+        selectInvestType = investType;
+        Debug.Log("투자타입 버튼 눌림");
+    }
+    public void InvestSelectButtonOn()
+    {
+        investSelectButtonCanvas.gameObject.SetActive(true);
+    }
+    public void InvestSelectButtonOff()
+    {
+        selectInvestType = 0; //초기화 
+        investSelectButtonCanvas.gameObject.SetActive(false);
+    }
     public void ActionSelectButtonOn()
     {
-        Debug.Log("행동버튼켜짐");
+        //Debug.Log("행동버튼켜짐");
         selectActionButtonCanvas.gameObject.SetActive(true);
     }
     public void ActionSelectButtonOff()
     {
-        actionSelectCoin = 0;
+        selectActionCoin = 0;
         selectActionButtonCanvas.gameObject.SetActive(false);
-        Debug.Log("행동버튼꺼짐");
+        //Debug.Log("행동버튼꺼짐");
     }
-   
+    public int GetInvestType()
+    {
+        return selectInvestType;
+    }
     public int GetSelectedCoinCount()
     {
-        
-        return selectCoin;
+        return selectMoveCoin;
     }
     public int GetActionSelectedCoinCount()
     {
-        return actionSelectCoin;
+        return selectActionCoin;
     }
     public void SetSelectedCoinCount()
     {
-        selectCoin = 0;
+        selectMoveCoin = 0;
     }
     public void InitCoinView()
     {
